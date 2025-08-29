@@ -1,6 +1,5 @@
 # ruff: noqa: PLR0133
 import json
-import os
 import random
 import shutil
 import string
@@ -203,7 +202,7 @@ def remove_prettier_pre_commit():
 
 def remove_repo_from_pre_commit_config(repo_to_remove: str):
     pre_commit_config = Path(".pre-commit-config.yaml")
-    content = pre_commit_config.read_text().splitlines(True)
+    content = pre_commit_config.read_text().splitlines(keepends=True)
 
     removing = False
     new_lines = []
@@ -518,7 +517,7 @@ def setup_dependencies():
     if "{{ cookiecutter.use_docker }}".lower() == "y":
         # Build the Docker service using Docker Compose
         try:
-            subprocess.run(["docker", "compose", "-f", "docker-compose.local.yml", "build", "django"], check=True)
+            subprocess.run(["docker", "compose", "-f", "docker-compose.local.yml", "build", "django"], check=True)  # noqa: S607
         except subprocess.CalledProcessError as e:
             print(f"Error building Docker service: {e}", file=sys.stderr)
             sys.exit(1)
@@ -531,23 +530,24 @@ def setup_dependencies():
 
     # Install production dependencies
     try:
-        subprocess.run(uv_cmd + ["add", "--no-sync", "-r", "requirements/production.txt"], check=True)
+        subprocess.run([*uv_cmd, "add", "--no-sync", "-r", "requirements/production.txt"], check=True)  # noqa: S603
     except subprocess.CalledProcessError as e:
         print(f"Error installing production dependencies: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Install local (development) dependencies
     try:
-        subprocess.run(uv_cmd + ["add", "--no-sync", "--dev", "-r", "requirements/local.txt"], check=True)
+        subprocess.run([*uv_cmd, "add", "--no-sync", "--dev", "-r", "requirements/local.txt"], check=True)  # noqa: S603
     except subprocess.CalledProcessError as e:
         print(f"Error installing local dependencies: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Remove the requirements directory
-    if os.path.exists("requirements"):
+    requirements_dir = Path("requirements")
+    if requirements_dir.exists():
         try:
-            shutil.rmtree("requirements")
-        except Exception as e:
+            shutil.rmtree(requirements_dir)
+        except Exception as e:  # noqa: BLE001
             print(f"Error removing 'requirements' folder: {e}", file=sys.stderr)
             sys.exit(1)
 
